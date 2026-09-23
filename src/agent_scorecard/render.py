@@ -26,7 +26,9 @@ from agent_scorecard.costs import (
 )
 from agent_scorecard.models import TranscriptScope, UsageRecord, UsageSummary
 from agent_scorecard.pricing import PriceTable
-from agent_scorecard.scan import ScanResult, accounting_lines
+from agent_scorecard.runs import AgentRun
+from agent_scorecard.scan import ScanResult
+from agent_scorecard.scorecard import GroupStats, Thresholds
 
 SCHEMA_VERSION = 1
 
@@ -408,9 +410,320 @@ def _cost_markdown(
 
 
 __all__ = [
-    "accounting_lines",
     "cost_label",
     "fmt_usd",
     "render_cost",
+    "render_report",
+    "render_runs",
     "usd",
 ]
+
+
+# ---- report ---------------------------------------------------------------
+
+
+def _run_money(microusd: int | None) -> float | None:
+    return None if microusd is None else round(usd(microusd), 4)
+
+
+def _success_cell(group: GroupStats) -> str:
+    if group.success_rate is None:
+        return "-"
+    return f"{group.succeeded}/{group.decided_runs} {group.success_rate:.0%}"
+
+
+def _verdict_text(verdict: str) -> str:
+    return verdict.replace("_", " ")
+
+
+def _group_json(group: GroupStats) -> dict[str, object]:
+    payload = group.model_dump()
+    payload["verdict"] = group.verdict.value
+    payload["reasons"] = list(group.reasons)
+    payload["notes"] = list(group.notes)
+    payload["cost_usd"] = _run_money(group.cost_microusd)
+    return payload
+
+
+def _report_json(
+    groups: list[GroupStats],
+    result: ScanResult,
+    totals: UsageSummary,
+    table: PriceTable,
+    *,
+    window: tuple[datetime.date | None, datetime.date | None],
+    sources: list[str],
+    thresholds: Thresholds,
+    total_runs: int,
+    agents_cost_microusd: int | None,
+    main_cost_microusd: int | None,
+    now: datetime.datetime,
+) -> dict[str, object]:
+    since, until = window
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "command": "report",
+        "generated_at": now.isoformat(),
+        "window": {
+            "since": since.isoformat() if since else None,
+            "until": until.isoformat() if until else None,
+        },
+        "sources": sources,
+        "prices": {
+            "checked_on": table.checked_on.isoformat(),
+            "source": table.source,
+        },
+        "totals": {
+            "agent_runs": total_runs,
+            "agents_cost_microusd": agents_cost_microusd,
+            "agents_cost_usd": _run_money(agents_cost_microusd),
+            "main_sessions_cost_microusd": main_cost_microusd,
+            "main_sessions_cost_usd": _run_money(main_cost_microusd),
+            "records": totals.record_count,
+            "total_input_tokens": totals.total_input_tokens,
+            "total_cache_read_tokens": totals.total_cache_read_tokens,
+            "total_cache_write_tokens": totals.total_cache_write_tokens,
+            "total_output_tokens": totals.total_output_tokens,
+            "full_rebuild_count": totals.full_rebuild_count,
+            "normal_growth_count": totals.normal_growth_count,
+            "unpriced_record_count": totals.unpriced_record_count,
+            "unpriced_models": list(totals.unpriced_models),
+        },
+        "accounting": _accounting_json(result),
+        "thresholds": {
+            "min_runs": thresholds.min_runs,
+            "remove_below": thresholds.remove_below,
+            "fix_below": thresholds.fix_below,
+            "max_tool_error_rate": thresholds.max_tool_error_rate,
+        },
+        "groups": [_group_json(group) for group in groups],
+    }
+
+
+def _report_table_lines(
+    groups: list[GroupStats],
+) -> list[tuple[str, str, str, str, str, str, str]]:
+    return [
+        (
+            group.key,
+            str(group.runs),
+            _success_cell(group),
+            fmt_usd(group.cost_microusd) if group.cost_microusd is not None else "unknown",
+            (fmt_usd_maybe(group.cost_per_success_usd)),
+            f"{group.tool_error_rate:.0%}",
+            _verdict_text(group.verdict.value),
+        )
+        for group in groups
+    ]
+
+
+def fmt_usd_maybe(value: float | None) -> str:
+    return "-" if value is None else f"${value:,.2f}"
+
+
+def render_report(
+    groups: list[GroupStats],
+    result: ScanResult,
+    totals: UsageSummary,
+    table: PriceTable,
+    *,
+    window: tuple[datetime.date | None, datetime.date | None],
+    sources: list[str],
+    thresholds: Thresholds,
+    total_runs: int,
+    agents_cost_microusd: int | None,
+    main_cost_microusd: int | None,
+    fmt: str,
+    now: datetime.datetime,
+) -> str:
+    """The `report` command: one row per group, with verdicts."""
+    if fmt == "json":
+        payload = _report_json(
+            groups,
+            result,
+            totals,
+            table,
+            window=window,
+            sources=sources,
+            thresholds=thresholds,
+            total_runs=total_runs,
+            agents_cost_microusd=agents_cost_microusd,
+            main_cost_microusd=main_cost_microusd,
+            now=now,
+        )
+        return json.dumps(payload, indent=2, sort_keys=True)
+
+    header = (
+        f"Agent scorecard · {_window_text(window)} · {total_runs:,} agent runs · "
+        f"agents {fmt_usd(agents_cost_microusd) if agents_cost_microusd is not None else 'unknown'}"
+        f" · main sessions "
+        f"{fmt_usd(main_cost_microusd) if main_cost_microusd is not None else 'unknown'}"
+    )
+
+    if fmt == "markdown":
+        lines = [
+            header,
+            "",
+            "| Group | Runs | Success | Cost | $/success | Tool errors | "
+            "Verdict | Reasons and notes |",
+            "|---|---:|---:|---:|---:|---:|---|---|",
+        ]
+        for group in groups:
+            cells = _report_table_lines([group])[0]
+            reason_text = "; ".join((*group.reasons, *group.notes))
+            lines.append(
+                f"| {cells[0]} | {cells[1]} | {cells[2]} | {cells[3]} | "
+                f"{cells[4]} | {cells[5]} | {cells[6]} | {reason_text} |"
+            )
+        lines += [
+            "",
+            f"Prices checked {table.checked_on.isoformat()} against "
+            f"{table.source}. Costs are API list prices. The verdict is a "
+            f"starting point for a human decision, not an automatic kill "
+            f"switch.",
+        ]
+        return "\n".join(lines) + "\n"
+
+    out = io.StringIO()
+    console = Console(file=out, width=110, highlight=False)
+    console.print(Text(header))
+    console.print()
+    rich_table = RichTable(box=None, show_header=True, pad_edge=False)
+    rich_table.add_column("Group", ratio=1)
+    rich_table.add_column("Runs", justify="right")
+    rich_table.add_column("Success", justify="right")
+    rich_table.add_column("Cost", justify="right")
+    rich_table.add_column("$/success", justify="right")
+    rich_table.add_column("Tool errors", justify="right")
+    rich_table.add_column("Verdict", justify="right")
+    for cells in _report_table_lines(groups):
+        rich_table.add_row(*cells)
+    console.print(rich_table)
+    for group in groups:
+        for line in (*group.reasons, *group.notes):
+            console.print(Text(f"  └ {line}", style="dim"))
+    console.print()
+    console.print(
+        Text(
+            f"Prices checked {table.checked_on.isoformat()} against "
+            f"{table.source}. Costs are API list prices.",
+            style="dim",
+        )
+    )
+    return out.getvalue()
+
+
+# ---- runs -----------------------------------------------------------------
+
+
+def _run_json(run: AgentRun, *, show_descriptions: bool) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "agent_id": run.agent_id,
+        "agent_type": run.agent_type,
+        "spawn_depth": run.spawn_depth,
+        "session_id": run.session_id,
+        "parent_agent_id": run.parent_agent_id,
+        "started_at": run.started_at.isoformat() if run.started_at else None,
+        "ended_at": run.ended_at.isoformat() if run.ended_at else None,
+        "duration_seconds": run.duration_seconds,
+        "turns": run.turns,
+        "cost_microusd": run.cost_microusd,
+        "cost_usd": _run_money(run.cost_microusd),
+        "unpriced_records": run.unpriced_records,
+        "unpriced_models": list(run.unpriced_models),
+        "primary_model": run.primary_model,
+        "models": list(run.models),
+        "tool_calls": run.tool_calls,
+        "tool_errors": run.tool_errors,
+        "tool_denials": run.tool_denials,
+        "edited_files": run.edited_files,
+        "test_runs": run.test_runs,
+        "last_test_passed": run.last_test_passed,
+        "commits": run.commits,
+        "cache_read_share": round(run.cache_read_share, 4),
+        "full_rebuild_turns": run.full_rebuild_turns,
+        "lifecycle": run.lifecycle.value,
+        "lifecycle_source": run.lifecycle_source.value,
+        "reason": run.reason,
+        "outcome": run.outcome.value,
+        "outcome_reason": run.outcome_reason,
+    }
+    if show_descriptions:
+        payload["description"] = run.description
+    return payload
+
+
+def render_runs(
+    runs: Sequence[AgentRun],
+    table: PriceTable,
+    *,
+    window: tuple[datetime.date | None, datetime.date | None],
+    sources: list[str],
+    fmt: str,
+    now: datetime.datetime,
+    show_descriptions: bool,
+) -> str:
+    """The `runs` command: one row per agent run, newest first."""
+    if fmt == "json":
+        since, until = window
+        payload = {
+            "schema_version": SCHEMA_VERSION,
+            "command": "runs",
+            "generated_at": now.isoformat(),
+            "window": {
+                "since": since.isoformat() if since else None,
+                "until": until.isoformat() if until else None,
+            },
+            "sources": sources,
+            "prices": {
+                "checked_on": table.checked_on.isoformat(),
+                "source": table.source,
+            },
+            "runs": [_run_json(run, show_descriptions=show_descriptions) for run in runs],
+        }
+        return json.dumps(payload, indent=2, sort_keys=True)
+
+    header = f"Agent runs · {_window_text(window)} · {len(runs):,} runs" + (
+        " · descriptions shown" if show_descriptions else ""
+    )
+
+    if fmt == "markdown":
+        lines = [
+            header,
+            "",
+            "| Agent | Started | Turns | Cost | Outcome |",
+            "|---|---|---:|---:|---|",
+        ]
+        for run in runs:
+            lines.append(
+                f"| {run.agent_type} ({run.agent_id}) | "
+                f"{run.started_at.date().isoformat() if run.started_at else '-'} | "
+                f"{run.turns} | "
+                f"{fmt_usd(run.cost_microusd) if run.cost_microusd is not None else 'unknown'} | "
+                f"{_verdict_text(run.outcome.value)} |"
+            )
+        return "\n".join(lines) + "\n"
+
+    out = io.StringIO()
+    console = Console(file=out, width=110, highlight=False)
+    console.print(Text(header))
+    console.print()
+    rich_table = RichTable(box=None, show_header=True, pad_edge=False)
+    rich_table.add_column("Agent", ratio=1)
+    rich_table.add_column("Started", justify="right")
+    rich_table.add_column("Turns", justify="right")
+    rich_table.add_column("Cost", justify="right")
+    rich_table.add_column("Outcome", justify="right")
+    for run in runs:
+        cells = [
+            f"{run.agent_type} ({run.agent_id})",
+            run.started_at.date().isoformat() if run.started_at else "-",
+            str(run.turns),
+            fmt_usd(run.cost_microusd) if run.cost_microusd is not None else "unknown",
+            _verdict_text(run.outcome.value),
+        ]
+        rich_table.add_row(*cells)
+        if show_descriptions and run.description:
+            console.print(Text(f"  └ {run.description}", style="dim"))
+    console.print(rich_table)
+    return out.getvalue()

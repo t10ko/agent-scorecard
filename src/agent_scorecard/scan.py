@@ -96,6 +96,7 @@ def scan(
             spawn_depth=origin.spawn_depth,
             session_id=source.session_id,
             parent_agent_id=origin.parent_agent_id,
+            description=source.description,
             stopped_by_user=source.stopped_by_user,
             test_patterns=patterns,
         )
