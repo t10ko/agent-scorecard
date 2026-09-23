@@ -13,7 +13,7 @@ import datetime
 from enum import StrEnum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, ValidationError, model_validator
 
 
 class TranscriptScope(StrEnum):
@@ -278,6 +278,116 @@ class RawAgentMeta(BaseModel):
     description: str | None = None
     tool_use_id: str | None = Field(default=None, alias="toolUseId")
     stopped_by_user: bool = Field(default=False, alias="stoppedByUser")
+
+
+class RawOrigin(BaseModel):
+    """Raw `origin` object on a log line; only its `kind` matters here."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore")
+
+    kind: str | None = None
+
+
+class RawUserMessage(BaseModel):
+    """Raw `message` object inside one `user` log line."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore")
+
+    role: str | None = None
+    content: JsonValue | None = None
+
+
+class RawUserLine(BaseModel):
+    """Raw shape of one `user` log line: tool results, background-task
+    notifications, and the `toolUseResult` object a parent writes when an
+    agent it waited for came back."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore")
+
+    type: Literal["user"]
+    timestamp: datetime.datetime
+    message: RawUserMessage
+    tool_use_result: JsonValue | None = Field(default=None, alias="toolUseResult")
+    tool_denial_kind: str | None = Field(default=None, alias="toolDenialKind")
+    origin: RawOrigin | None = None
+
+
+class ToolUseBlock(BaseModel):
+    """One `tool_use` content block: a tool call made by the model."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore")
+
+    id: str
+    name: str
+    input: JsonValue = Field(default_factory=dict)
+
+
+class ToolResultBlock(BaseModel):
+    """One `tool_result` content block: the result of a tool call."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore")
+
+    tool_use_id: str
+    is_error: bool = False
+    content: JsonValue | None = None
+
+
+def content_blocks(content: JsonValue | None) -> tuple[dict[str, JsonValue], ...]:
+    """A line's `message.content` as a tuple of content blocks. A string
+    content — how tool results and notifications sometimes arrive — has no
+    blocks."""
+    if not isinstance(content, list):
+        return ()
+    return tuple(block for block in content if isinstance(block, dict))
+
+
+def tool_use_blocks(content: JsonValue | None) -> tuple[ToolUseBlock, ...]:
+    """The `tool_use` blocks inside one line's content. A streamed partial
+    can repeat a block, so callers deduplicate by block id."""
+    blocks: list[ToolUseBlock] = []
+    for raw in content_blocks(content):
+        if raw.get("type") == "tool_use":
+            try:
+                blocks.append(ToolUseBlock.model_validate(raw))
+            except ValidationError:
+                continue
+    return tuple(blocks)
+
+
+def tool_result_blocks(content: JsonValue | None) -> tuple[ToolResultBlock, ...]:
+    """The `tool_result` blocks inside one line's content."""
+    blocks: list[ToolResultBlock] = []
+    for raw in content_blocks(content):
+        if raw.get("type") == "tool_result":
+            try:
+                blocks.append(ToolResultBlock.model_validate(raw))
+            except ValidationError:
+                continue
+    return tuple(blocks)
+
+
+def text_blocks(content: JsonValue | None) -> tuple[str, ...]:
+    """The text of every text block inside one line's content. A bare
+    string content counts as one text block."""
+    if isinstance(content, str):
+        return (content,)
+    texts: list[str] = []
+    for raw in content_blocks(content):
+        if raw.get("type") == "text" and isinstance(raw.get("text"), str):
+            texts.append(str(raw["text"]))
+    return tuple(texts)
+
+
+def as_dict(value: JsonValue | None) -> dict[str, JsonValue] | None:
+    if isinstance(value, dict):
+        return value
+    return None
+
+
+def as_str(value: JsonValue | None) -> str | None:
+    if isinstance(value, str):
+        return value
+    return None
 
 
 class FileTally(BaseModel):

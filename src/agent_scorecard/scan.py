@@ -12,6 +12,7 @@ and the tool refuses to report one rather than printing wrong numbers.
 from __future__ import annotations
 
 import datetime
+from collections.abc import Sequence
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
@@ -22,6 +23,12 @@ from agent_scorecard.models import (
     FileTally,
     MainThreadOrigin,
     ParsedTranscripts,
+)
+from agent_scorecard.runs import (
+    DEFAULT_TEST_PATTERNS,
+    RunCollector,
+    RunFacts,
+    compile_test_patterns,
 )
 from agent_scorecard.usage import UsageParser
 
@@ -41,9 +48,14 @@ class ScanResult(BaseModel):
     files: TranscriptFiles
     tally: FileTally
     parsed: ParsedTranscripts
+    run_facts: tuple[RunFacts, ...] = ()
 
 
-def scan(roots: list[Path], since: datetime.date | None = None) -> ScanResult:
+def scan(
+    roots: list[Path],
+    since: datetime.date | None = None,
+    test_patterns: Sequence[str] | None = None,
+) -> ScanResult:
     """Read every log file under each root once, feeding each decoded line
     to the usage parser.
 
@@ -51,19 +63,34 @@ def scan(roots: list[Path], since: datetime.date | None = None) -> ScanResult:
     — every line in such a file is older too. Journals are read for
     lifecycle only; their lines stay out of the usage accounting.
     """
+    patterns = compile_test_patterns(
+        DEFAULT_TEST_PATTERNS if test_patterns is None else test_patterns
+    )
     tally = FileTally()
     files = list_transcript_files(roots, tally)
     usage = UsageParser()
     for path in files.main:
         for line in iter_file_lines(path, since, tally):
             usage.feed(line, MainThreadOrigin())
+    run_facts: list[RunFacts] = []
     for source in files.subagents:
+        origin = source.origin
+        collector = RunCollector(
+            agent_id=origin.agent_id,
+            agent_type=origin.agent_type,
+            spawn_depth=origin.spawn_depth,
+            session_id=source.session_id,
+            parent_agent_id=origin.parent_agent_id,
+            test_patterns=patterns,
+        )
         for line in iter_file_lines(source.path, since, tally):
-            usage.feed(line, source.origin)
+            usage.feed(line, origin)
+            collector.feed(line)
+        run_facts.append(collector.finish())
     for journal in files.journals:
         for _raw in iter_journal_lines(journal, tally):
             pass  # lifecycle collection joins in a later milestone
-    return ScanResult(files=files, tally=tally, parsed=usage.finish())
+    return ScanResult(files=files, tally=tally, parsed=usage.finish(), run_facts=tuple(run_facts))
 
 
 def loss_lines(parsed: ParsedTranscripts) -> int:

@@ -18,7 +18,7 @@ from typing import NamedTuple
 
 from pydantic import JsonValue, ValidationError
 
-from agent_scorecard.models import FileTally, RawTranscriptLine
+from agent_scorecard.models import FileTally, RawTranscriptLine, RawUserLine
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,7 @@ class DecodedLine(NamedTuple):
     raw: dict[str, JsonValue] | None = None
     timestamp: datetime.datetime | None = None
     assistant: RawTranscriptLine | None = None
+    user: RawUserLine | None = None
     error: ValidationError | None = None
 
 
@@ -88,6 +89,25 @@ def decode_line(text: str) -> DecodedLine:
     if line_type is None:
         return DecodedLine(kind=LineKind.NO_TYPE)
     timestamp = _parse_timestamp(raw.get("timestamp"))
+    if line_type == "user":
+        try:
+            user = RawUserLine.model_validate(raw)
+        except ValidationError:
+            # A user line that will not validate is still expected noise for
+            # the usage accounting; the collectors just see no user payload.
+            return DecodedLine(
+                kind=LineKind.NON_ASSISTANT,
+                line_type="user",
+                raw=raw,
+                timestamp=timestamp,
+            )
+        return DecodedLine(
+            kind=LineKind.NON_ASSISTANT,
+            line_type="user",
+            raw=raw,
+            timestamp=user.timestamp,
+            user=user,
+        )
     if line_type != "assistant":
         return DecodedLine(
             kind=LineKind.NON_ASSISTANT,
