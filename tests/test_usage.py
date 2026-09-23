@@ -8,19 +8,12 @@ import json
 import logging
 
 import pytest
-from conftest import assistant_line, ts
+from conftest import assistant_line, parse_lines, ts
 from pydantic import ValidationError
 
 from agent_scorecard.logfile import decode_line
-from agent_scorecard.models import MainThreadOrigin, ParsedTranscripts, SubagentOrigin, UsageSummary
+from agent_scorecard.models import SubagentOrigin, UsageSummary
 from agent_scorecard.usage import UsageParser
-
-
-def parse_lines(*lines: str) -> ParsedTranscripts:
-    parser = UsageParser()
-    for text in lines:
-        parser.feed(decode_line(text), MainThreadOrigin())
-    return parser.finish()
 
 
 def test_repeated_content_blocks_collapse_into_one_record() -> None:

@@ -287,3 +287,16 @@ def write_journal(dir: Path, session: str, workflow_id: str, lines: list[str]) -
     path = directory / "journal.jsonl"
     path.write_text("".join(line + "\n" for line in lines), encoding="utf-8")
     return path
+
+
+def parse_lines(*lines: str):
+    """Parse raw line texts through the same path a scan uses, with
+    main-session origin, for tests that exercise decoding and pricing."""
+    from agent_scorecard.logfile import decode_line
+    from agent_scorecard.models import MainThreadOrigin
+    from agent_scorecard.usage import UsageParser
+
+    parser = UsageParser()
+    for text in lines:
+        parser.feed(decode_line(text), MainThreadOrigin())
+    return parser.finish()

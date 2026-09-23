@@ -1,0 +1,40 @@
+# USD per million tokens, standard API rates. Check the source page before
+# trusting these numbers.
+#
+# Verified against the pricing page on 2026-09-23. The page also lists a
+# "Fable" family whose API model identifiers it does not state; they are
+# left out here rather than guessed, and would surface as unpriced.
+checked_on = "2026-09-23"
+source = "https://www.anthropic.com/pricing"
+
+[cache]
+read_multiplier = 0.1        # a cache read costs 0.1x the input rate
+write_5m_multiplier = 1.25   # a 5-minute cache write costs 1.25x the input rate
+write_1h_multiplier = 2.0    # a 1-hour cache write costs 2x the input rate
+
+# Current models.
+[models."claude-opus-5-5"]
+input = 4.00
+output = 20.00
+
+[models."claude-sonnet-5"]
+input = 2.00
+output = 10.00
+
+[models."claude-haiku-4-5"]
+input = 1.00
+output = 5.00
+
+# Legacy models, still present in older logs.
+[models."claude-opus-5"]
+input = 5.00
+output = 25.00
+
+[models."claude-opus-4-8"]
+input = 5.00
+output = 25.00
+
+[aliases]
+# Logs can name a dated snapshot of a model. Aliasing is always explicit;
+# date suffixes are never stripped automatically.
+"claude-haiku-4-5-20251001" = "claude-haiku-4-5"
