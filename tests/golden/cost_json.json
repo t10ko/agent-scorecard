@@ -1,0 +1,211 @@
+{
+  "accounting": {
+    "files": {
+      "failed": 0,
+      "globbed": 48,
+      "journal_files_failed": 0,
+      "journal_files_found": 1,
+      "journal_files_read": 1,
+      "journal_lines": 2,
+      "missing_agent_metadata": 0,
+      "read_fully": 48,
+      "skipped_by_since": 0
+    },
+    "lines": {
+      "assistant_lines_without_request_id": 0,
+      "assistant_lines_without_usage": 0,
+      "blank_lines": 0,
+      "conflict_lines_discarded": 0,
+      "conflicting_request_ids": 0,
+      "duplicate_lines_collapsed": 0,
+      "lines_read": 276,
+      "lines_without_type_discriminator": 0,
+      "malformed_json_lines": 0,
+      "non_assistant_lines": 108,
+      "non_object_json_lines": 0,
+      "synthetic_lines": 0,
+      "tokens_dropped_without_request_id": 0,
+      "undecodable_assistant_lines": 0,
+      "unresolved_conflict_request_ids": 0
+    }
+  },
+  "by_agent_type": {
+    "Explore": {
+      "full_rebuild_count": 0,
+      "normal_growth_count": 40,
+      "record_count": 40,
+      "total_cache_read_tokens": 1800000,
+      "total_cache_write_tokens": 90000,
+      "total_cost_microusd": 1227000,
+      "total_cost_usd": 1.227,
+      "total_input_tokens": 180000,
+      "total_output_tokens": 28200,
+      "unpriced_models": [],
+      "unpriced_record_count": 0
+    },
+    "code-writer": {
+      "full_rebuild_count": 0,
+      "normal_growth_count": 52,
+      "record_count": 52,
+      "total_cache_read_tokens": 15200000,
+      "total_cache_write_tokens": 760000,
+      "total_cost_microusd": 11341700,
+      "total_cost_usd": 11.3417,
+      "total_input_tokens": 1540000,
+      "total_output_tokens": 35980,
+      "unpriced_models": [],
+      "unpriced_record_count": 0
+    },
+    "reviewer": {
+      "full_rebuild_count": 0,
+      "normal_growth_count": 12,
+      "record_count": 12,
+      "total_cache_read_tokens": 1350000,
+      "total_cache_write_tokens": 67500,
+      "total_cost_microusd": 793350,
+      "total_cost_usd": 0.7933,
+      "total_input_tokens": 135000,
+      "total_output_tokens": 8460,
+      "unpriced_models": [],
+      "unpriced_record_count": 0
+    },
+    "test-fixer": {
+      "full_rebuild_count": 0,
+      "normal_growth_count": 32,
+      "record_count": 32,
+      "total_cache_read_tokens": 7200000,
+      "total_cache_write_tokens": 360000,
+      "total_cost_microusd": 4005600,
+      "total_cost_usd": 4.0056,
+      "total_input_tokens": 720000,
+      "total_output_tokens": 22560,
+      "unpriced_models": [],
+      "unpriced_record_count": 0
+    },
+    "web-researcher": {
+      "full_rebuild_count": 0,
+      "normal_growth_count": 24,
+      "record_count": 24,
+      "total_cache_read_tokens": 3600000,
+      "total_cache_write_tokens": 180000,
+      "total_cost_microusd": 2059200,
+      "total_cost_usd": 2.0592,
+      "total_input_tokens": 360000,
+      "total_output_tokens": 16920,
+      "unpriced_models": [],
+      "unpriced_record_count": 0
+    }
+  },
+  "by_day": [
+    {
+      "date": "2026-09-15",
+      "main_thread_cost_microusd": 2120000,
+      "main_thread_cost_usd": 2.12,
+      "main_thread_requests": 8,
+      "subagent_cost_microusd": 11842400,
+      "subagent_cost_usd": 11.8424,
+      "subagent_requests": 56
+    },
+    {
+      "date": "2026-09-16",
+      "main_thread_cost_microusd": 0,
+      "main_thread_cost_usd": 0.0,
+      "main_thread_requests": 0,
+      "subagent_cost_microusd": 5828550,
+      "subagent_cost_usd": 5.8285,
+      "subagent_requests": 56
+    },
+    {
+      "date": "2026-09-17",
+      "main_thread_cost_microusd": 0,
+      "main_thread_cost_usd": 0.0,
+      "main_thread_requests": 0,
+      "subagent_cost_microusd": 1755900,
+      "subagent_cost_usd": 1.7559,
+      "subagent_requests": 48
+    }
+  ],
+  "by_scope": {
+    "main_thread": {
+      "full_rebuild_count": 0,
+      "normal_growth_count": 8,
+      "record_count": 8,
+      "total_cache_read_tokens": 7200000,
+      "total_cache_write_tokens": 0,
+      "total_cost_microusd": 2120000,
+      "total_cost_usd": 2.12,
+      "total_input_tokens": 240000,
+      "total_output_tokens": 20000,
+      "unpriced_models": [],
+      "unpriced_record_count": 0
+    },
+    "subagent": {
+      "full_rebuild_count": 0,
+      "normal_growth_count": 160,
+      "record_count": 160,
+      "total_cache_read_tokens": 29150000,
+      "total_cache_write_tokens": 1457500,
+      "total_cost_microusd": 19426850,
+      "total_cost_usd": 19.4269,
+      "total_input_tokens": 2935000,
+      "total_output_tokens": 112120,
+      "unpriced_models": [],
+      "unpriced_record_count": 0
+    }
+  },
+  "by_spawn_depth": {
+    "1": {
+      "full_rebuild_count": 0,
+      "normal_growth_count": 157,
+      "record_count": 157,
+      "total_cache_read_tokens": 28350000,
+      "total_cache_write_tokens": 1417500,
+      "total_cost_microusd": 18988450,
+      "total_cost_usd": 18.9885,
+      "total_input_tokens": 2855000,
+      "total_output_tokens": 110280,
+      "unpriced_models": [],
+      "unpriced_record_count": 0
+    },
+    "2": {
+      "full_rebuild_count": 0,
+      "normal_growth_count": 3,
+      "record_count": 3,
+      "total_cache_read_tokens": 800000,
+      "total_cache_write_tokens": 40000,
+      "total_cost_microusd": 438400,
+      "total_cost_usd": 0.4384,
+      "total_input_tokens": 80000,
+      "total_output_tokens": 1840,
+      "unpriced_models": [],
+      "unpriced_record_count": 0
+    }
+  },
+  "command": "cost",
+  "generated_at": "2026-09-23T12:00:00+00:00",
+  "prices": {
+    "checked_on": "2026-09-23",
+    "source": "https://www.anthropic.com/pricing"
+  },
+  "schema_version": 1,
+  "sources": [
+    "examples/demo"
+  ],
+  "totals": {
+    "full_rebuild_count": 0,
+    "normal_growth_count": 168,
+    "record_count": 168,
+    "total_cache_read_tokens": 36350000,
+    "total_cache_write_tokens": 1457500,
+    "total_cost_microusd": 21546850,
+    "total_cost_usd": 21.5468,
+    "total_input_tokens": 3175000,
+    "total_output_tokens": 132120,
+    "unpriced_models": [],
+    "unpriced_record_count": 0
+  },
+  "window": {
+    "since": null,
+    "until": null
+  }
+}

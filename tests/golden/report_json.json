@@ -1,0 +1,248 @@
+{
+  "accounting": {
+    "files": {
+      "failed": 0,
+      "globbed": 48,
+      "journal_files_failed": 0,
+      "journal_files_found": 1,
+      "journal_files_read": 1,
+      "journal_lines": 2,
+      "missing_agent_metadata": 0,
+      "read_fully": 48,
+      "skipped_by_since": 0
+    },
+    "lines": {
+      "assistant_lines_without_request_id": 0,
+      "assistant_lines_without_usage": 0,
+      "blank_lines": 0,
+      "conflict_lines_discarded": 0,
+      "conflicting_request_ids": 0,
+      "duplicate_lines_collapsed": 0,
+      "lines_read": 276,
+      "lines_without_type_discriminator": 0,
+      "malformed_json_lines": 0,
+      "non_assistant_lines": 108,
+      "non_object_json_lines": 0,
+      "synthetic_lines": 0,
+      "tokens_dropped_without_request_id": 0,
+      "undecodable_assistant_lines": 0,
+      "unresolved_conflict_request_ids": 0
+    }
+  },
+  "command": "report",
+  "generated_at": "2026-09-23T12:00:00+00:00",
+  "groups": [
+    {
+      "cache_read_share": 0.8695652173913043,
+      "commits": 0,
+      "cost_microusd": 2059200,
+      "cost_per_run_usd": 0.3432,
+      "cost_per_success_usd": 1.0296,
+      "cost_usd": 2.0592,
+      "decided_runs": 6,
+      "failed": 4,
+      "failed_tests": 0,
+      "full_rebuild_turns": 0,
+      "inferred_outcomes": 0,
+      "key": "web-researcher",
+      "median_duration_seconds": 180.0,
+      "median_turns": 4.0,
+      "models": {
+        "claude-sonnet-5": 6
+      },
+      "notes": [],
+      "reasons": [
+        "remove: 2 of 6 decided runs succeeded (33%), below 50%"
+      ],
+      "runs": 6,
+      "runs_ending_green": 0,
+      "runs_with_tests": 0,
+      "succeeded": 2,
+      "success_rate": 0.3333333333333333,
+      "tool_calls": 1,
+      "tool_denials": 1,
+      "tool_error_rate": 0.0,
+      "tool_errors": 0,
+      "unknown": 0,
+      "unpriced_runs": 0,
+      "verdict": "remove"
+    },
+    {
+      "cache_read_share": 0.8695652173913043,
+      "commits": 0,
+      "cost_microusd": 4005600,
+      "cost_per_run_usd": 0.5007,
+      "cost_per_success_usd": 1.0014,
+      "cost_usd": 4.0056,
+      "decided_runs": 8,
+      "failed": 1,
+      "failed_tests": 3,
+      "full_rebuild_turns": 0,
+      "inferred_outcomes": 0,
+      "key": "test-fixer",
+      "median_duration_seconds": 300.0,
+      "median_turns": 4.0,
+      "models": {
+        "claude-sonnet-5": 8
+      },
+      "notes": [],
+      "reasons": [
+        "fix: 4 of 8 decided runs succeeded (50%), below 80%"
+      ],
+      "runs": 8,
+      "runs_ending_green": 5,
+      "runs_with_tests": 8,
+      "succeeded": 4,
+      "success_rate": 0.5,
+      "tool_calls": 31,
+      "tool_denials": 0,
+      "tool_error_rate": 0.0967741935483871,
+      "tool_errors": 3,
+      "unknown": 0,
+      "unpriced_runs": 0,
+      "verdict": "fix"
+    },
+    {
+      "cache_read_share": 0.8685714285714285,
+      "commits": 0,
+      "cost_microusd": 11341700,
+      "cost_per_run_usd": 0.8724,
+      "cost_per_success_usd": 1.1342,
+      "cost_usd": 11.3417,
+      "decided_runs": 12,
+      "failed": 1,
+      "failed_tests": 1,
+      "full_rebuild_turns": 0,
+      "inferred_outcomes": 0,
+      "key": "code-writer",
+      "median_duration_seconds": 300.0,
+      "median_turns": 4.0,
+      "models": {
+        "claude-opus-5": 3,
+        "claude-sonnet-5": 10
+      },
+      "notes": [
+        "1 runs with unknown outcome"
+      ],
+      "reasons": [
+        "keep: 10 of 12 decided runs succeeded (83%)"
+      ],
+      "runs": 13,
+      "runs_ending_green": 12,
+      "runs_with_tests": 13,
+      "succeeded": 10,
+      "success_rate": 0.8333333333333334,
+      "tool_calls": 40,
+      "tool_denials": 0,
+      "tool_error_rate": 0.025,
+      "tool_errors": 1,
+      "unknown": 1,
+      "unpriced_runs": 0,
+      "verdict": "keep"
+    },
+    {
+      "cache_read_share": 0.8695652173913043,
+      "commits": 0,
+      "cost_microusd": 1227000,
+      "cost_per_run_usd": 0.1227,
+      "cost_per_success_usd": 0.1227,
+      "cost_usd": 1.227,
+      "decided_runs": 10,
+      "failed": 0,
+      "failed_tests": 0,
+      "full_rebuild_turns": 0,
+      "inferred_outcomes": 0,
+      "key": "Explore",
+      "median_duration_seconds": 180.0,
+      "median_turns": 4.0,
+      "models": {
+        "claude-sonnet-5": 10
+      },
+      "notes": [],
+      "reasons": [
+        "keep: 10 of 10 decided runs succeeded (100%)"
+      ],
+      "runs": 10,
+      "runs_ending_green": 0,
+      "runs_with_tests": 0,
+      "succeeded": 10,
+      "success_rate": 1.0,
+      "tool_calls": 0,
+      "tool_denials": 0,
+      "tool_error_rate": 0.0,
+      "tool_errors": 0,
+      "unknown": 0,
+      "unpriced_runs": 0,
+      "verdict": "keep"
+    },
+    {
+      "cache_read_share": 0.8695652173913043,
+      "commits": 0,
+      "cost_microusd": 793350,
+      "cost_per_run_usd": 0.2645,
+      "cost_per_success_usd": 0.2645,
+      "cost_usd": 0.7933,
+      "decided_runs": 3,
+      "failed": 0,
+      "failed_tests": 0,
+      "full_rebuild_turns": 0,
+      "inferred_outcomes": 0,
+      "key": "reviewer",
+      "median_duration_seconds": 180.0,
+      "median_turns": 4.0,
+      "models": {
+        "claude-sonnet-5": 3
+      },
+      "notes": [],
+      "reasons": [
+        "not enough data: 3 decided runs, need 5"
+      ],
+      "runs": 3,
+      "runs_ending_green": 0,
+      "runs_with_tests": 0,
+      "succeeded": 3,
+      "success_rate": 1.0,
+      "tool_calls": 0,
+      "tool_denials": 0,
+      "tool_error_rate": 0.0,
+      "tool_errors": 0,
+      "unknown": 0,
+      "unpriced_runs": 0,
+      "verdict": "not_enough_data"
+    }
+  ],
+  "prices": {
+    "checked_on": "2026-09-23",
+    "source": "https://www.anthropic.com/pricing"
+  },
+  "schema_version": 1,
+  "sources": [
+    "examples/demo"
+  ],
+  "thresholds": {
+    "fix_below": 0.8,
+    "max_tool_error_rate": 0.2,
+    "min_runs": 5,
+    "remove_below": 0.5
+  },
+  "totals": {
+    "agent_runs": 40,
+    "agents_cost_microusd": 19426850,
+    "agents_cost_usd": 19.4269,
+    "full_rebuild_count": 0,
+    "main_sessions_cost_microusd": 2120000,
+    "main_sessions_cost_usd": 2.12,
+    "normal_growth_count": 8,
+    "records": 8,
+    "total_cache_read_tokens": 7200000,
+    "total_cache_write_tokens": 0,
+    "total_input_tokens": 240000,
+    "total_output_tokens": 20000,
+    "unpriced_models": [],
+    "unpriced_record_count": 0
+  },
+  "window": {
+    "since": null,
+    "until": null
+  }
+}

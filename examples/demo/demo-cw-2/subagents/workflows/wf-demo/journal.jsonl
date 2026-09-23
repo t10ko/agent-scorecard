@@ -1,0 +1,2 @@
+{"type": "started", "agentId": "cw08", "key": "demo-key"}
+{"type": "result", "agentId": "cw08", "key": "demo-key", "result": "ok"}
