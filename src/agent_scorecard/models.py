@@ -81,6 +81,26 @@ class LifecycleSource(StrEnum):
     NONE = "none"
 
 
+class Outcome(StrEnum):
+    """Whether a run delivered: `failed_tests` means it edited files and
+    left the tests red; `unknown` runs are left out of every rate."""
+
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    FAILED_TESTS = "failed_tests"
+    UNKNOWN = "unknown"
+
+
+class Verdict(StrEnum):
+    """The scorecard's recommendation for one group of runs. A starting
+    point for a human decision, never an automatic kill switch."""
+
+    REMOVE = "remove"
+    FIX = "fix"
+    KEEP = "keep"
+    NOT_ENOUGH_DATA = "not_enough_data"
+
+
 class RebuildKind(StrEnum):
     """Whether a request's prompt-cache write looks like a full context-prefix
     rebuild or normal incremental growth on an existing cache."""

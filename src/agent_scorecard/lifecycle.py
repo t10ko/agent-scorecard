@@ -327,3 +327,25 @@ def attach_lifecycles(
             )
         )
     return tuple(resolved)
+
+
+def final_report_for(facts: RunFacts, events: Sequence[LifecycleEvent]) -> str | None:
+    """The text the run's self-report patterns match against, from the
+    first source that has one: the foreground result's content, the latest
+    notification's `<result>`, or the run's own last assistant text.
+
+    The report stays in memory only; it is never printed or saved.
+    """
+    by_source = {(event.source, event.kind): event for event in events if event.result_text}
+    foreground = by_source.get((LifecycleSource.FOREGROUND, Lifecycle.COMPLETED))
+    if foreground is not None and foreground.result_text:
+        return foreground.result_text
+    notifications = [
+        event
+        for event in events
+        if event.source is LifecycleSource.NOTIFICATION and event.result_text
+    ]
+    if notifications:
+        latest = sorted(notifications, key=_event_sort_key)[-1]
+        return latest.result_text
+    return facts.final_report

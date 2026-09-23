@@ -55,6 +55,11 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+# The multiplication sign is the brief's own notation for the note.
+"src/agent_scorecard/scorecard.py" = ["RUF001"]
+"tests/test_scorecard.py" = ["RUF001"]
+
 [tool.pyright]
 include = ["src", "tests"]
 pythonVersion = "3.12"

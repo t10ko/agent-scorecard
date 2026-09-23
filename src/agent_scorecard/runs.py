@@ -21,6 +21,7 @@ from agent_scorecard.logfile import DecodedLine, LineKind
 from agent_scorecard.models import (
     Lifecycle,
     LifecycleSource,
+    Outcome,
     ParsedTranscripts,
     RawTranscriptLine,
     RawUserLine,
@@ -268,10 +269,15 @@ class AgentRun(BaseModel):
     last_test_passed: bool | None = None
     commits: int = Field(default=0, ge=0)
     cache_read_share: float = Field(default=0.0, ge=0.0)
+    cache_read_tokens: int = Field(default=0, ge=0)
+    billed_input_tokens: int = Field(default=0, ge=0)
     full_rebuild_turns: int = Field(default=0, ge=0)
     lifecycle: Lifecycle = Lifecycle.UNKNOWN
     lifecycle_source: LifecycleSource = LifecycleSource.NONE
     reason: str | None = None
+    outcome: Outcome = Outcome.UNKNOWN
+    outcome_reason: str | None = None
+    outcome_inferred: bool = False
 
 
 def build_runs(
@@ -345,6 +351,8 @@ def build_runs(
                 last_test_passed=_last_test_passed(facts_item),
                 commits=facts_item.commits,
                 cache_read_share=(cache_read / billed_input) if billed_input else 0.0,
+                cache_read_tokens=cache_read,
+                billed_input_tokens=billed_input,
                 full_rebuild_turns=full_rebuilds,
             )
         )
