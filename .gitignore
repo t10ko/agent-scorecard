@@ -1,0 +1,11 @@
+BRIEF.md
+local/
+.remember/
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+*.egg-info/
