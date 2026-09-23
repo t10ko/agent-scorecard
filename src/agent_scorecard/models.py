@@ -59,6 +59,28 @@ class SubagentOrigin(BaseModel):
 RecordOrigin = Annotated[MainThreadOrigin | SubagentOrigin, Field(discriminator="scope")]
 
 
+class Lifecycle(StrEnum):
+    """How a run ended."""
+
+    COMPLETED = "completed"
+    FAILED = "failed"
+    KILLED = "killed"
+    STOPPED = "stopped"
+    UNKNOWN = "unknown"
+
+
+class LifecycleSource(StrEnum):
+    """Where the lifecycle answer came from; `inferred` marks a guess from
+    the run's own file rather than a recorded outcome."""
+
+    FOREGROUND = "foreground"
+    NOTIFICATION = "notification"
+    WORKFLOW_JOURNAL = "workflow_journal"
+    SIDECAR = "sidecar"
+    INFERRED = "inferred"
+    NONE = "none"
+
+
 class RebuildKind(StrEnum):
     """Whether a request's prompt-cache write looks like a full context-prefix
     rebuild or normal incremental growth on an existing cache."""

@@ -300,3 +300,16 @@ def parse_lines(*lines: str):
     for text in lines:
         parser.feed(decode_line(text), MainThreadOrigin())
     return parser.finish()
+
+
+def finished_runs(dir: Path, test_patterns: list[str] | None = None):
+    """Scan a folder and return runs with lifecycles resolved — the same
+    pipeline the report command runs, up to outcome classification."""
+    from agent_scorecard.lifecycle import attach_lifecycles
+    from agent_scorecard.pricing import load_prices
+    from agent_scorecard.runs import build_runs
+    from agent_scorecard.scan import scan
+
+    result = scan([dir], test_patterns=test_patterns)
+    runs = build_runs(result.run_facts, result.parsed, load_prices())
+    return attach_lifecycles(runs, result.run_facts, result.events)

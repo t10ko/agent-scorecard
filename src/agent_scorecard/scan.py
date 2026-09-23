@@ -17,6 +17,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 
+from agent_scorecard.lifecycle import LifecycleCollector, LifecycleEvent
 from agent_scorecard.locate import TranscriptFiles, list_transcript_files
 from agent_scorecard.logfile import iter_file_lines, iter_journal_lines
 from agent_scorecard.models import (
@@ -49,6 +50,7 @@ class ScanResult(BaseModel):
     tally: FileTally
     parsed: ParsedTranscripts
     run_facts: tuple[RunFacts, ...] = ()
+    events: tuple[LifecycleEvent, ...] = ()
 
 
 def scan(
@@ -68,10 +70,23 @@ def scan(
     )
     tally = FileTally()
     files = list_transcript_files(roots, tally)
+    lifecycle = LifecycleCollector(
+        tool_id_to_agent={
+            source.tool_use_id: source.origin.agent_id
+            for source in files.subagents
+            if source.tool_use_id is not None
+        },
+        descriptions={
+            source.origin.agent_id: source.description
+            for source in files.subagents
+            if source.description is not None
+        },
+    )
     usage = UsageParser()
     for path in files.main:
         for line in iter_file_lines(path, since, tally):
             usage.feed(line, MainThreadOrigin())
+            lifecycle.feed(line)
     run_facts: list[RunFacts] = []
     for source in files.subagents:
         origin = source.origin
@@ -81,16 +96,26 @@ def scan(
             spawn_depth=origin.spawn_depth,
             session_id=source.session_id,
             parent_agent_id=origin.parent_agent_id,
+            stopped_by_user=source.stopped_by_user,
             test_patterns=patterns,
         )
         for line in iter_file_lines(source.path, since, tally):
             usage.feed(line, origin)
             collector.feed(line)
+            # A nested agent's outcome is recorded in its parent agent's
+            # file, so subagent files are read for events too.
+            lifecycle.feed(line)
         run_facts.append(collector.finish())
     for journal in files.journals:
-        for _raw in iter_journal_lines(journal, tally):
-            pass  # lifecycle collection joins in a later milestone
-    return ScanResult(files=files, tally=tally, parsed=usage.finish(), run_facts=tuple(run_facts))
+        for raw in iter_journal_lines(journal, tally):
+            lifecycle.feed_journal(raw)
+    return ScanResult(
+        files=files,
+        tally=tally,
+        parsed=usage.finish(),
+        run_facts=tuple(run_facts),
+        events=lifecycle.finish(),
+    )
 
 
 def loss_lines(parsed: ParsedTranscripts) -> int:

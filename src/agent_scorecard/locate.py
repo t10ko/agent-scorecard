@@ -53,13 +53,18 @@ def agent_id_of(path: Path) -> str:
 
 class SubagentSource(BaseModel):
     """One subagent log file, its sidecar-derived identity, and the session
-    folder it belongs to."""
+    folder it belongs to. The extra sidecar fields feed lifecycle
+    attribution: `tool_use_id` links the run to the parent's tool call, and
+    `description` is what gets stripped out of notification reasons."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     path: Path
     origin: SubagentOrigin
     session_id: str
+    description: str | None = None
+    tool_use_id: str | None = None
+    stopped_by_user: bool = False
 
 
 class TranscriptFiles(BaseModel):
@@ -97,7 +102,14 @@ def _subagent_source(path: Path, root: Path) -> SubagentSource | None:
         parent_agent_id=meta.parent_agent_id,
     )
     session_id = path.relative_to(root).parts[0]
-    return SubagentSource(path=path, origin=origin, session_id=session_id)
+    return SubagentSource(
+        path=path,
+        origin=origin,
+        session_id=session_id,
+        description=meta.description,
+        tool_use_id=meta.tool_use_id,
+        stopped_by_user=meta.stopped_by_user,
+    )
 
 
 def list_transcript_files(roots: list[Path], tally: FileTally) -> TranscriptFiles:

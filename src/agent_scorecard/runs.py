@@ -19,6 +19,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from agent_scorecard.costs import classify_prefix_rebuild
 from agent_scorecard.logfile import DecodedLine, LineKind
 from agent_scorecard.models import (
+    Lifecycle,
+    LifecycleSource,
     ParsedTranscripts,
     RawTranscriptLine,
     RawUserLine,
@@ -75,6 +77,7 @@ class RunFacts(BaseModel):
     spawn_depth: int
     session_id: str
     parent_agent_id: str | None = None
+    stopped_by_user: bool = False
     started_at: datetime.datetime | None = None
     ended_at: datetime.datetime | None = None
     request_ids: tuple[str, ...] = ()
@@ -115,6 +118,7 @@ class RunCollector:
         spawn_depth: int,
         session_id: str,
         parent_agent_id: str | None = None,
+        stopped_by_user: bool = False,
         test_patterns: tuple[re.Pattern[str], ...] = (),
     ) -> None:
         self._agent_id = agent_id
@@ -122,6 +126,7 @@ class RunCollector:
         self._spawn_depth = spawn_depth
         self._session_id = session_id
         self._parent_agent_id = parent_agent_id
+        self._stopped_by_user = stopped_by_user
         self._test_patterns = test_patterns
         self._started_at: datetime.datetime | None = None
         self._ended_at: datetime.datetime | None = None
@@ -164,6 +169,7 @@ class RunCollector:
             spawn_depth=self._spawn_depth,
             session_id=self._session_id,
             parent_agent_id=self._parent_agent_id,
+            stopped_by_user=self._stopped_by_user,
             started_at=self._started_at,
             ended_at=self._ended_at,
             request_ids=tuple(self._request_ids),
@@ -263,6 +269,9 @@ class AgentRun(BaseModel):
     commits: int = Field(default=0, ge=0)
     cache_read_share: float = Field(default=0.0, ge=0.0)
     full_rebuild_turns: int = Field(default=0, ge=0)
+    lifecycle: Lifecycle = Lifecycle.UNKNOWN
+    lifecycle_source: LifecycleSource = LifecycleSource.NONE
+    reason: str | None = None
 
 
 def build_runs(
